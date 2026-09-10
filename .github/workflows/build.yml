@@ -1,0 +1,28 @@
+name: Build NeoForge Server
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Download NeoForge installer
+        run: |
+          curl -L -o installer.jar "LINK_TAI_NEOFORGE_INSTALLER"
+
+      - name: Run installer
+        run: java -jar installer.jar --installServer
+
+      - name: Zip result
+        run: zip -r server-output.zip . -x "installer.jar"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: neoforge-server
+          path: server-output.zip
