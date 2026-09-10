@@ -1,5 +1,12 @@
 name: Build NeoForge Server
-on: workflow_dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      serverpack_url:
+        description: 'Direct download link to the server pack .zip'
+        required: true
+        type: string
 
 jobs:
   build:
@@ -11,18 +18,26 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Download NeoForge installer
+      - name: Download server pack
         run: |
-          curl -L -o installer.jar "LINK_TAI_NEOFORGE_INSTALLER"
+          curl -L -o serverpack.zip "${{ github.event.inputs.serverpack_url }}"
+          mkdir -p server
+          unzip -o serverpack.zip -d server
 
-      - name: Run installer
-        run: java -jar installer.jar --installServer
+      - name: Run installer (if present)
+        working-directory: server
+        run: |
+          if [ -f installer.jar ]; then
+            java -jar installer.jar --installServer
+          fi
 
       - name: Zip result
-        run: zip -r server-output.zip . -x "installer.jar"
+        working-directory: server
+        run: zip -r ../server-output.zip . -x "*.zip" "installer.jar"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: neoforge-server
           path: server-output.zip
+          retention-days: 7
